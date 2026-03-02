@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  #DATABASE
+  db:
+    image: ankane/pgvector:latest
+    container_name: project_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - project_network
+
+  #FastAPI
+  backend:
+    build: ./backend
+    container_name: project_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - project_network
+
+  #React
+  frontend:
+    build: ./frontend
+    container_name: project_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - project_network
+
+volumes:
+  postgres_data:
+
+networks:
+  project_network:
+    driver: bridge
