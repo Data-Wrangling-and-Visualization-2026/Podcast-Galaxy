@@ -64,6 +64,6 @@ docker-compose down
 ```bash
 fix(parser): handle null values in JSON response
 refactor(database): optimize query performance
-perf(images): compress assets for faster loading
+perf(images): compress assets for faster loading 
 ```
 Описание в настоящем времени (не added, а add)
