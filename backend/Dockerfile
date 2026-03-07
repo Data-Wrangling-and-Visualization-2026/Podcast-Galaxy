@@ -1,19 +1,24 @@
 FROM python:3.11-slim
 
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 WORKDIR /app
 
-# Установка зависимостей
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        libpq-dev \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Копируем requirements.txt если есть
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем весь код
 COPY . .
 
-# Запускаем
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
