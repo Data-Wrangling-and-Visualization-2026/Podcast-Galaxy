@@ -60,7 +60,7 @@ docker-compose down
 - test (добавление или исправление тестов)
 - perf (изменения для улучшения производительности)
 - revert (откат изменений)
-#### Пример
+#### Пример 
 ```bash
 fix(parser): handle null values in JSON response
 refactor(database): optimize query performance
