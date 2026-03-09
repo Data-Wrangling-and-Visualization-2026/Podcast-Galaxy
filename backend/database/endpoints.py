@@ -284,6 +284,6 @@ async def get_uncategorized_episodes(
 
 main_api_router = APIRouter()
 
-main_api_router.include_router(podcast_router, prefix="/user", tags=["user"])
-main_api_router.include_router(episode_router, prefix="/vacancies", tags=["vacancies"])
+main_api_router.include_router(podcast_router, prefix="/podcast", tags=["podcast"])
+main_api_router.include_router(episode_router, prefix="/episode", tags=["episode"])
 app.include_router(main_api_router)
