@@ -255,7 +255,7 @@ async def update_episode_category(
 
 @episode_router.post("/categories/batch-update", response_model=dict)
 async def batch_update_episode_categories(batch_update: EpisodeCategoryBatchUpdate) -> dict:
-    """Batch update episode categories (for neural network processing)"""
+    """Batch update episode categories"""
     async with async_session() as session:
         async with session.begin():
             episode_dal = EpisodeDAL(session)
@@ -284,6 +284,6 @@ async def get_uncategorized_episodes(
 
 main_api_router = APIRouter()
 
-main_api_router.include_router(podcast_router, prefix="/podcast", tags=["podcast"])
+main_api_router.include_router(podcast_router, prefix="/podscast", tags=["podcast"])
 main_api_router.include_router(episode_router, prefix="/episode", tags=["episode"])
 app.include_router(main_api_router)

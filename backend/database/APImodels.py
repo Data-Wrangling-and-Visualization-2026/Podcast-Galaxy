@@ -9,6 +9,8 @@ class PodcastFields(BaseModel):
     age_restriction: Optional[int] = Field(None, ge=0, le=21)
     likes_count: Optional[int] = Field(0, ge=0)
     category: Optional[str] = None
+    yandex_id: Optional[str] = None
+    track_count: Optional[int] = None
 
 
 class EpisodeFields(BaseModel):
@@ -16,6 +18,8 @@ class EpisodeFields(BaseModel):
     duration: Optional[int] = Field(None, ge=0)
     description: Optional[str] = None
     category: Optional[str] = None
+    yandex_id: Optional[str] = None
+    pub_date: Optional[str] = None
 
 
 class TunedModel(BaseModel):
@@ -25,14 +29,12 @@ class TunedModel(BaseModel):
 
 class PodcastCreate(PodcastFields):
     title: str
-    pass
 
 
 class EpisodeCreate(EpisodeFields):
     title: str
     duration: int
     podcast_id: uuid.UUID
-    pass
 
 
 class ShowPodcast(PodcastFields):
