@@ -27,6 +27,16 @@ class PodcastDAL:
         result = await self.db_session.execute(query, {"podcast_id": podcast_id})
         return result.mappings().first()
 
+    async def get_podcasts_from_n(self, skip: int = 0, limit: int = 20) -> Sequence[RowMapping]:
+        query = text("""
+            SELECT * FROM podcasts 
+            ORDER BY podcast_id 
+            OFFSET :skip 
+            LIMIT :limit
+        """)
+        result = await self.db_session.execute(query, {"skip": skip, "limit": limit})
+        return result.mappings().all()
+
     async def update_podcast(self, podcast_id: uuid.UUID, update_data: dict) -> RowMapping | None:
         set_clause = ", ".join([f"{key} = :{key}" for key in update_data.keys()])
         query = text(f"""
@@ -85,14 +95,12 @@ class EpisodeDAL:
         query = text("DELETE FROM episodes WHERE episode_id = :episode_id RETURNING episode_id")
         result = await self.db_session.execute(query, {"episode_id": episode_id})
         await self.db_session.commit()
-
         return result.first() is not None
 
     async def delete_episodes_by_podcast(self, podcast_id: uuid.UUID) -> int:
         query = text("DELETE FROM episodes WHERE podcast_id = :podcast_id RETURNING episode_id")
         result = await self.db_session.execute(query, {"podcast_id": podcast_id})
         await self.db_session.commit()
-
         return result.rowcount
 
     async def search_episodes(self, search_term: str) -> Sequence[RowMapping]:
