@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 services:
   #DATABASE
@@ -55,6 +55,8 @@ services:
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    environment:
+      - BROWSER=none
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -62,6 +64,8 @@ services:
       - backend
     networks:
       - project_network
+    stdin_open: true
+    tty: true
 
 volumes:
   postgres_data:
