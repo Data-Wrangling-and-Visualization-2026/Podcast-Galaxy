@@ -12,10 +12,8 @@ class Podcast(Base):
     podcast_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     yandex_id = Column(String, unique=True, nullable=True)
     title = Column(String, nullable=False)
-    description = Column(String, nullable=True)
     age_restriction = Column(Integer, nullable=True)
     likes_count = Column(Integer, default=0)
-    category = Column(String, nullable=True)
     track_count = Column(Integer, nullable=True)
 
     episodes = relationship("Episode", back_populates="podcast", cascade="all, delete-orphan")

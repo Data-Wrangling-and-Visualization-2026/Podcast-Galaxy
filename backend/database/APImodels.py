@@ -5,10 +5,8 @@ from typing import Optional, List
 
 class PodcastFields(BaseModel):
     title: Optional[str] = None
-    description: Optional[str] = None
     age_restriction: Optional[int] = Field(None, ge=0, le=21)
     likes_count: Optional[int] = Field(0, ge=0)
-    category: Optional[str] = None
     yandex_id: Optional[str] = None
     track_count: Optional[int] = None
 
@@ -56,10 +54,8 @@ class ShowEpisode(EpisodeFields):
 
 class PodcastUpdate(BaseModel):
     title: Optional[str] = None
-    description: Optional[str] = None
     age_restriction: Optional[int] = Field(None, ge=0, le=21)
     likes_count: Optional[int] = Field(None, ge=0)
-    category: Optional[str] = None
 
 
 class EpisodeUpdate(BaseModel):
@@ -85,3 +81,7 @@ class EpisodeCategoryBatchUpdate(BaseModel):
 
 class PodcastCategoryBatchUpdate(BaseModel):
     updates: List[PodcastCategoryUpdate]
+
+
+class BatchEpisodeCreate(BaseModel):
+    episodes: List[EpisodeCreate]

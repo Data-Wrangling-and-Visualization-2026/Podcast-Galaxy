@@ -28,7 +28,6 @@ class PodcastDAL:
         return result.mappings().first()
 
     async def get_podcasts_from_n(self, skip: int = 0, limit: int = 20) -> Sequence[RowMapping]:
-        """Get podcasts with pagination"""
         query = text("""
             SELECT * FROM podcasts 
             ORDER BY podcast_id 

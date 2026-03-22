@@ -20,6 +20,7 @@ def load_categories_from_file(filename="categories.txt"):
         print(f"File {filename} not found. Please create it with one category per line.")
         return []
 
+
 def fetch_album_ids_for_categories(category_list):
     if not category_list:
         print("No categories to process.")
@@ -67,7 +68,6 @@ def fetch_album_ids_for_categories(category_list):
                     if push_pos == -1:
                         continue
                     start = push_pos + 6
-
                     balance = 0
                     in_string = False
                     escape = False
@@ -94,7 +94,6 @@ def fetch_album_ids_for_categories(category_list):
                         data = json.loads(json_str)
                     except json.JSONDecodeError:
                         continue
-
                     try:
                         albums = data['nonMusic']['albums']['albums']
                         if albums and isinstance(albums, list):
@@ -103,7 +102,27 @@ def fetch_album_ids_for_categories(category_list):
                                     all_album_ids.add(album['id'])
                                     ids_found_in_category += 1
                     except KeyError:
-                        continue
+                        def find_album_ids(obj):
+                            ids = []
+                            if isinstance(obj, dict):
+                                if 'id' in obj and isinstance(obj['id'], (int, str)):
+                                    if any(key in obj for key in ['type', 'metaType', 'genre', 'trackCount']):
+                                        try:
+                                            ids.append(int(obj['id']))
+                                        except:
+                                            pass
+                                for value in obj.values():
+                                    if isinstance(value, (dict, list)):
+                                        ids.extend(find_album_ids(value))
+                            elif isinstance(obj, list):
+                                for item in obj:
+                                    ids.extend(find_album_ids(item))
+                            return ids
+
+                        found_ids = find_album_ids(data)
+                        for aid in found_ids:
+                            all_album_ids.add(aid)
+                            ids_found_in_category += 1
 
             if ids_found_in_category > 0:
                 print(f"Found {ids_found_in_category} IDs in this category.")
@@ -123,11 +142,9 @@ def fetch_album_ids_for_categories(category_list):
         print("No album IDs were found for any of the provided categories.")
         return
 
-    # Prepare filename with timestamp and category count
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"album_ids_{len(category_list)}_categories_{timestamp}.txt"
 
-    # Save all unique IDs to the file
     with open(filename, 'w', encoding='utf-8') as f:
         for album_id in sorted(all_album_ids):
             f.write(f"{album_id}\n")

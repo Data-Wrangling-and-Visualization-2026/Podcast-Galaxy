@@ -3,20 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRouter
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
 from database.settings import settings
 from database.DAL import *
 from database.APImodels import *
 from database.table import Base
-from typing import List
+from typing import List, Optional
 import uuid
 
-# create async engine for interaction with database
 engine = create_async_engine(settings.real_database_url, future=True, echo=True)
 
-# create session for the interaction with database
 async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
-# create instance of the app
 app = FastAPI(title="Podcast App")
 
 app.add_middleware(
@@ -42,9 +40,21 @@ async def create_podcast(body: PodcastCreate) -> ShowPodcast:
     async with async_session() as session:
         async with session.begin():
             podcast_dal = PodcastDAL(session)
+
+            if body.yandex_id:
+                existing = await session.execute(
+                    text("SELECT * FROM podcasts WHERE yandex_id = :yandex_id"),
+                    {"yandex_id": body.yandex_id}
+                )
+                existing_podcast = existing.mappings().first()
+                if existing_podcast:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=f"Podcast with yandex_id {body.yandex_id} already exists"
+                    )
+
             podcast = await podcast_dal.create_podcast(body)
 
-            # Convert to ShowPodcast model
             podcast_dict = model_to_dict(podcast)
             return ShowPodcast(**podcast_dict)
 
@@ -68,14 +78,23 @@ async def get_podcast_by_id(podcast_id: uuid.UUID) -> ShowPodcast:
 @podcast_router.get("/", response_model=List[ShowPodcast])
 async def get_podcasts(
         skip: int = Query(0, ge=0, description="Number of records to skip"),
-        limit: int = Query(20, ge=1, le=100, description="Number of records to return")
+        limit: int = Query(20, ge=1, le=100, description="Number of records to return"),
+        yandex_id: Optional[str] = Query(None, description="Filter by Yandex ID")
 ) -> List[ShowPodcast]:
     async with async_session() as session:
         async with session.begin():
-            podcast_dal = PodcastDAL(session)
-            podcasts = await podcast_dal.get_podcasts_from_n(skip, limit)
-
-            return [ShowPodcast(**podcast) for podcast in podcasts]
+            if yandex_id:
+                query = text("""
+                    SELECT * FROM podcasts 
+                    WHERE yandex_id = :yandex_id
+                """)
+                result = await session.execute(query, {"yandex_id": yandex_id})
+                podcast = result.mappings().first()
+                return [ShowPodcast(**podcast)] if podcast else []
+            else:
+                podcast_dal = PodcastDAL(session)
+                podcasts = await podcast_dal.get_podcasts_from_n(skip, limit)
+                return [ShowPodcast(**podcast) for podcast in podcasts]
 
 
 @podcast_router.patch("/{podcast_id}", response_model=ShowPodcast)
@@ -87,7 +106,6 @@ async def update_podcast(
         async with session.begin():
             podcast_dal = PodcastDAL(session)
 
-            # Filter out None values
             update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
 
             if not update_dict:
@@ -149,10 +167,20 @@ async def update_podcast_category(
 async def create_episode(body: EpisodeCreate) -> ShowEpisode:
     async with async_session() as session:
         async with session.begin():
+            if body.yandex_id:
+                existing = await session.execute(
+                    text("SELECT episode_id FROM episodes WHERE yandex_id = :yandex_id"),
+                    {"yandex_id": body.yandex_id}
+                )
+                if existing.first():
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=f"Episode with yandex_id {body.yandex_id} already exists"
+                    )
+
             episode_dal = EpisodeDAL(session)
             episode = await episode_dal.create_episode(body)
 
-            # Convert to ShowEpisode model
             episode_dict = model_to_dict(episode)
             return ShowEpisode(**episode_dict)
 
@@ -185,7 +213,6 @@ async def get_episodes_by_podcast(podcast_id: uuid.UUID) -> List[ShowEpisode]:
 
 @episode_router.delete("/{episode_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_episode(episode_id: uuid.UUID):
-    """Delete an episode"""
     async with async_session() as session:
         async with session.begin():
             episode_dal = EpisodeDAL(session)
@@ -202,7 +229,6 @@ async def delete_episode(episode_id: uuid.UUID):
 
 @episode_router.delete("/podcast/{podcast_id}/all", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_podcast_episodes(podcast_id: uuid.UUID):
-    """Delete all episodes for a specific podcast"""
     async with async_session() as session:
         async with session.begin():
             episode_dal = EpisodeDAL(session)
@@ -221,7 +247,6 @@ async def delete_all_podcast_episodes(podcast_id: uuid.UUID):
 async def search_episodes(
         q: str = Query(..., min_length=1, description="Search term")
 ) -> List[ShowEpisode]:
-    """Search episodes by title or description"""
     async with async_session() as session:
         async with session.begin():
             episode_dal = EpisodeDAL(session)
@@ -235,7 +260,6 @@ async def update_episode_category(
         episode_id: uuid.UUID,
         category_update: EpisodeCategoryUpdate
 ) -> ShowEpisode:
-    """Update episode category (for neural network processing)"""
     async with async_session() as session:
         async with session.begin():
             episode_dal = EpisodeDAL(session)
@@ -255,7 +279,6 @@ async def update_episode_category(
 
 @episode_router.post("/categories/batch-update", response_model=dict)
 async def batch_update_episode_categories(batch_update: EpisodeCategoryBatchUpdate) -> dict:
-    """Batch update episode categories"""
     async with async_session() as session:
         async with session.begin():
             episode_dal = EpisodeDAL(session)
@@ -273,7 +296,6 @@ async def batch_update_episode_categories(batch_update: EpisodeCategoryBatchUpda
 async def get_uncategorized_episodes(
         limit: int = Query(100, ge=1, le=500, description="Maximum number of episodes to return")
 ) -> List[ShowEpisode]:
-    """Get episodes without category (for batch processing by neural network)"""
     async with async_session() as session:
         async with session.begin():
             episode_dal = EpisodeDAL(session)
@@ -282,8 +304,56 @@ async def get_uncategorized_episodes(
             return [ShowEpisode(**episode) for episode in episodes]
 
 
+@episode_router.post("/batch", status_code=status.HTTP_207_MULTI_STATUS)
+async def create_episodes_batch(batch: BatchEpisodeCreate):
+    async with async_session() as session:
+        async with session.begin():
+            episode_dal = EpisodeDAL(session)
+
+            results = {
+                "created": 0,
+                "skipped": 0,
+                "failed": 0,
+                "details": []
+            }
+
+            for episode_data in batch.episodes:
+                try:
+                    existing = await session.execute(
+                        text("SELECT episode_id FROM episodes WHERE yandex_id = :yandex_id"),
+                        {"yandex_id": episode_data.yandex_id}
+                    )
+
+                    if existing.first():
+                        results["skipped"] += 1
+                        results["details"].append({
+                            "yandex_id": episode_data.yandex_id,
+                            "status": "skipped",
+                            "reason": "already_exists"
+                        })
+                        continue
+
+                    episode = await episode_dal.create_episode(episode_data)
+                    results["created"] += 1
+                    results["details"].append({
+                        "yandex_id": episode_data.yandex_id,
+                        "episode_id": str(episode.episode_id),
+                        "status": "created"
+                    })
+
+                except Exception as e:
+                    results["failed"] += 1
+                    results["details"].append({
+                        "yandex_id": episode_data.yandex_id,
+                        "status": "failed",
+                        "reason": str(e)
+                    })
+
+            return results
+
+
 main_api_router = APIRouter()
 
-main_api_router.include_router(podcast_router, prefix="/podscast", tags=["podcast"])
+main_api_router.include_router(podcast_router, prefix="/podcast", tags=["podcast"])
 main_api_router.include_router(episode_router, prefix="/episode", tags=["episode"])
 app.include_router(main_api_router)
