@@ -5,9 +5,14 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     real_database_url: str = Field(
-        default="postgresql+asyncpg://postgres:gosha14062007@localhost:5432/proba1",
+        default="postgresql+asyncpg://user:pass@localhost:5432/dbname",
         alias="REAL_DATABASE_URL"
     )
+
+    # real_database_url: str = Field(
+    #     ...,
+    #     alias="REAL_DATABASE_URL"
+    # )
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).parent / ".env",
