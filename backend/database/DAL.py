@@ -51,8 +51,11 @@ class PodcastDAL:
         return result.mappings().first()
 
     async def delete_podcast(self, podcast_id: uuid.UUID) -> bool:
-        query = text("DELETE FROM podcasts WHERE podcast_id = :podcast_id RETURNING podcast_id")
-        result = await self.db_session.execute(query, {"podcast_id": podcast_id})
+        delete_episodes_query = text("DELETE FROM episodes WHERE podcast_id = :podcast_id")
+        await self.db_session.execute(delete_episodes_query, {"podcast_id": podcast_id})
+
+        delete_podcast_query = text("DELETE FROM podcasts WHERE podcast_id = :podcast_id RETURNING podcast_id")
+        result = await self.db_session.execute(delete_podcast_query, {"podcast_id": podcast_id})
         await self.db_session.commit()
         return result.first() is not None
 
