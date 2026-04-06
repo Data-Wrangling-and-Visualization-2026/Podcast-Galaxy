@@ -5,7 +5,7 @@ from sqlalchemy.orm import class_mapper
 from database.table import Podcast, Episode
 from database.APImodels import PodcastCreate, EpisodeCreate
 import uuid
-from typing import List
+from typing import List, Optional
 
 
 def model_to_dict(model):
@@ -77,12 +77,41 @@ class EpisodeDAL:
 
     async def create_episode(self, episode_data: EpisodeCreate) -> Episode:
         episode_dict = episode_data.model_dump()
-        episode_dict.pop('category', None)
 
         new_episode = Episode(**episode_dict)
         self.db_session.add(new_episode)
         await self.db_session.flush()
         return new_episode
+
+    async def get_episodes(
+        self,
+        skip: int = 0,
+        limit: int = 20,
+        podcast_id: Optional[uuid.UUID] = None,
+        has_category: Optional[bool] = None,
+    ) -> Sequence[RowMapping]:
+        conditions = []
+        params = {"skip": skip, "limit": limit}
+
+        if podcast_id is not None:
+            conditions.append("podcast_id = :podcast_id")
+            params["podcast_id"] = podcast_id
+
+        if has_category is True:
+            conditions.append("category IS NOT NULL")
+        elif has_category is False:
+            conditions.append("category IS NULL")
+
+        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        query = text(f"""
+            SELECT * FROM episodes
+            {where_clause}
+            ORDER BY pub_date DESC NULLS LAST, episode_id
+            OFFSET :skip
+            LIMIT :limit
+        """)
+        result = await self.db_session.execute(query, params)
+        return result.mappings().all()
 
     async def get_episode_by_id(self, episode_id: uuid.UUID) -> RowMapping | None:
         query = text("SELECT * FROM episodes WHERE episode_id = :episode_id")

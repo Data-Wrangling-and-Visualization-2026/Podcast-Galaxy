@@ -1,5 +1,5 @@
 import uuid
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 from typing import Optional, List
 
 
@@ -15,7 +15,10 @@ class EpisodeFields(BaseModel):
     title: Optional[str] = None
     duration: Optional[int] = Field(None, ge=0)
     description: Optional[str] = None
-    category: Optional[str] = None
+    category: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("category", "all_scores")
+    )
     yandex_id: Optional[str] = None
     pub_date: Optional[str] = None
 
@@ -72,7 +75,10 @@ class PodcastCategoryUpdate(BaseModel):
 
 class EpisodeCategoryUpdate(BaseModel):
     episode_id: uuid.UUID
-    category: str
+    category: str = Field(
+        ...,
+        validation_alias=AliasChoices("category", "all_scores")
+    )
 
 
 class EpisodeCategoryBatchUpdate(BaseModel):
