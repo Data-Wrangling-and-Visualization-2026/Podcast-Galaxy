@@ -141,28 +141,6 @@ async def delete_podcast(podcast_id: uuid.UUID):
             return None
 
 
-@podcast_router.patch("/{podcast_id}/category", response_model=ShowPodcast)
-async def update_podcast_category(
-        podcast_id: uuid.UUID,
-        category_update: PodcastCategoryUpdate
-) -> ShowPodcast:
-    async with async_session() as session:
-        async with session.begin():
-            podcast_dal = PodcastDAL(session)
-            updated_podcast = await podcast_dal.update_podcast_category(
-                podcast_id,
-                category_update.category
-            )
-
-            if not updated_podcast:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Podcast with id {podcast_id} not found"
-                )
-
-            return ShowPodcast(**updated_podcast)
-
-
 @episode_router.post("/", response_model=ShowEpisode, status_code=status.HTTP_201_CREATED)
 async def create_episode(body: EpisodeCreate) -> ShowEpisode:
     async with async_session() as session:
@@ -190,10 +168,6 @@ async def get_episodes(
         skip: int = Query(0, ge=0, description="Number of records to skip"),
         limit: int = Query(20, ge=1, le=500, description="Number of records to return"),
         podcast_id: Optional[uuid.UUID] = Query(None, description="Filter by podcast ID"),
-        has_category: Optional[bool] = Query(
-            None,
-            description="Filter episodes with or without category payload"
-        )
 ) -> List[ShowEpisode]:
     async with async_session() as session:
         async with session.begin():
@@ -202,7 +176,6 @@ async def get_episodes(
                 skip=skip,
                 limit=limit,
                 podcast_id=podcast_id,
-                has_category=has_category
             )
 
             return [ShowEpisode(**episode) for episode in episodes]
@@ -262,53 +235,43 @@ async def search_episodes(
             return [ShowEpisode(**episode) for episode in episodes]
 
 
-@episode_router.get("/uncategorized/", response_model=List[ShowEpisode])
-async def get_uncategorized_episodes(
-        limit: int = Query(100, ge=1, le=500, description="Maximum number of episodes to return")
-) -> List[ShowEpisode]:
+@episode_router.post("/viewport", response_model=List[ViewportPoint])
+async def get_points_in_viewport(body: ViewportRequest) -> List[ViewportPoint]:
     async with async_session() as session:
         async with session.begin():
-            episode_dal = EpisodeDAL(session)
-            episodes = await episode_dal.get_episodes_without_category(limit)
-
-            return [ShowEpisode(**episode) for episode in episodes]
-
-
-@episode_router.patch("/{episode_id}/category", response_model=ShowEpisode)
-async def update_episode_category(
-        episode_id: uuid.UUID,
-        category_update: EpisodeCategoryUpdate
-) -> ShowEpisode:
-    async with async_session() as session:
-        async with session.begin():
-            episode_dal = EpisodeDAL(session)
-            updated_episode = await episode_dal.update_episode_category(
-                episode_id,
-                category_update.category
+            point_dal = EpisodeMapPointDAL(session)
+            points = await point_dal.get_points_in_viewport(
+                min_x=body.min_x,
+                max_x=body.max_x,
+                min_y=body.min_y,
+                max_y=body.max_y,
+                limit=body.limit,
             )
 
-            if not updated_episode:
+            return [ViewportPoint(**point) for point in points]
+
+
+@episode_router.get("/{episode_id}/hover", response_model=EpisodeHoverResponse)
+async def get_episode_hover(episode_id: uuid.UUID) -> EpisodeHoverResponse:
+    async with async_session() as session:
+        async with session.begin():
+            point_dal = EpisodeMapPointDAL(session)
+            episode = await point_dal.get_hover_details(episode_id)
+
+            if not episode:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Episode with id {episode_id} not found"
                 )
 
-            return ShowEpisode(**updated_episode)
-
-
-@episode_router.post("/categories/batch-update", response_model=dict)
-async def batch_update_episode_categories(batch_update: EpisodeCategoryBatchUpdate) -> dict:
-    async with async_session() as session:
-        async with session.begin():
-            episode_dal = EpisodeDAL(session)
-            updates_list = [update.model_dump() for update in batch_update.updates]
-            updated_count = await episode_dal.update_episodes_categories_batch(updates_list)
-
-            return {
-                "total": len(batch_update.updates),
-                "updated": updated_count,
-                "message": f"Successfully updated {updated_count} out of {len(batch_update.updates)} episodes"
-            }
+            return EpisodeHoverResponse(
+                episode_id=episode["episode_id"],
+                title=episode["title"],
+                description=episode["description"],
+                podcast_title=episode["podcast_title"],
+                dominant_topic=episode["dominant_topic"],
+                top_3_topics=extract_top_topics(episode["topic_scores_json"]),
+            )
 
 
 @episode_router.get("/{episode_id}", response_model=ShowEpisode)

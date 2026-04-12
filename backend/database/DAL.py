@@ -59,18 +59,6 @@ class PodcastDAL:
         await self.db_session.commit()
         return result.first() is not None
 
-    async def update_podcast_category(self, podcast_id: uuid.UUID, category: str) -> RowMapping | None:
-        query = text("""
-            UPDATE podcasts 
-            SET category = :category
-            WHERE podcast_id = :podcast_id 
-            RETURNING *
-        """)
-        result = await self.db_session.execute(query, {"podcast_id": podcast_id, "category": category})
-        await self.db_session.commit()
-        return result.mappings().first()
-
-
 class EpisodeDAL:
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
@@ -88,7 +76,6 @@ class EpisodeDAL:
         skip: int = 0,
         limit: int = 20,
         podcast_id: Optional[uuid.UUID] = None,
-        has_category: Optional[bool] = None,
     ) -> Sequence[RowMapping]:
         conditions = []
         params = {"skip": skip, "limit": limit}
@@ -96,11 +83,6 @@ class EpisodeDAL:
         if podcast_id is not None:
             conditions.append("podcast_id = :podcast_id")
             params["podcast_id"] = podcast_id
-
-        if has_category is True:
-            conditions.append("category IS NOT NULL")
-        elif has_category is False:
-            conditions.append("category IS NULL")
 
         where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         query = text(f"""
@@ -145,34 +127,56 @@ class EpisodeDAL:
         result = await self.db_session.execute(query, {"search": f"%{search_term}%"})
         return result.mappings().all()
 
-    async def update_episode_category(self, episode_id: uuid.UUID, category: str) -> RowMapping | None:
-        query = text("""
-            UPDATE episodes 
-            SET category = :category
-            WHERE episode_id = :episode_id 
-            RETURNING *
-        """)
-        result = await self.db_session.execute(query, {"episode_id": episode_id, "category": category})
-        await self.db_session.commit()
-        return result.mappings().first()
 
-    async def update_episodes_categories_batch(self, updates: List[dict]) -> int:
-        updated_count = 0
-        for update_data in updates:
-            result = await self.update_episode_category(
-                update_data['episode_id'],
-                update_data['category']
-            )
-            if result:
-                updated_count += 1
-        return updated_count
+class EpisodeMapPointDAL:
+    def __init__(self, db_session: AsyncSession):
+        self.db_session = db_session
 
-    async def get_episodes_without_category(self, limit: int = 100) -> Sequence[RowMapping]:
+    async def get_points_in_viewport(
+        self,
+        min_x: float,
+        max_x: float,
+        min_y: float,
+        max_y: float,
+        limit: int = 5000,
+    ) -> Sequence[RowMapping]:
         query = text("""
-            SELECT * FROM episodes 
-            WHERE category IS NULL 
-            ORDER BY episode_id 
+            SELECT
+                episode_id,
+                umap_x AS x,
+                umap_y AS y,
+                dominant_topic
+            FROM episode_map_points
+            WHERE umap_x BETWEEN :min_x AND :max_x
+              AND umap_y BETWEEN :min_y AND :max_y
+            ORDER BY episode_id
             LIMIT :limit
         """)
-        result = await self.db_session.execute(query, {"limit": limit})
+        result = await self.db_session.execute(
+            query,
+            {
+                "min_x": min_x,
+                "max_x": max_x,
+                "min_y": min_y,
+                "max_y": max_y,
+                "limit": limit,
+            },
+        )
         return result.mappings().all()
+
+    async def get_hover_details(self, episode_id: uuid.UUID) -> RowMapping | None:
+        query = text("""
+            SELECT
+                e.episode_id,
+                e.title,
+                e.description,
+                p.title AS podcast_title,
+                emp.dominant_topic,
+                emp.topic_scores_json
+            FROM episodes e
+            INNER JOIN podcasts p ON p.podcast_id = e.podcast_id
+            LEFT JOIN episode_map_points emp ON emp.episode_id = e.episode_id
+            WHERE e.episode_id = :episode_id
+        """)
+        result = await self.db_session.execute(query, {"episode_id": episode_id})
+        return result.mappings().first()

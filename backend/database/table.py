@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, Float, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
 import uuid
@@ -28,7 +28,25 @@ class Episode(Base):
     description = Column(String, nullable=True)
     duration = Column(Integer, nullable=False)
     podcast_id = Column(UUID(as_uuid=True), ForeignKey("podcasts.podcast_id"), nullable=False)
-    category = Column(String, nullable=True)
     pub_date = Column(String, nullable=True)
 
     podcast = relationship("Podcast", back_populates="episodes")
+    map_point = relationship(
+        "EpisodeMapPoint",
+        back_populates="episode",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+
+class EpisodeMapPoint(Base):
+    __tablename__ = "episode_map_points"
+
+    episode_id = Column(UUID(as_uuid=True), ForeignKey("episodes.episode_id"), primary_key=True)
+    umap_x = Column(Float, nullable=False, index=True)
+    umap_y = Column(Float, nullable=False, index=True)
+    dominant_topic = Column(String, nullable=False)
+    dominant_weight = Column(Float, nullable=True)
+    topic_scores_json = Column(Text, nullable=False)
+
+    episode = relationship("Episode", back_populates="map_point")
