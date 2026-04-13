@@ -151,6 +151,31 @@ class EpisodeMapPointDAL:
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 
+    async def get_episode_counts_by_topic(self) -> Sequence[RowMapping]:
+        query = text("""
+            SELECT
+                dominant_topic AS topic,
+                COUNT(*) AS count
+            FROM episode_map_points
+            GROUP BY dominant_topic
+            ORDER BY count DESC, dominant_topic
+        """)
+        result = await self.db_session.execute(query)
+        return result.mappings().all()
+
+    async def get_episode_counts_by_year(self) -> Sequence[RowMapping]:
+        query = text("""
+            SELECT
+                CAST(SUBSTRING(pub_date FROM '(\d{4})') AS INTEGER) AS year,
+                COUNT(*) AS count
+            FROM episodes
+            WHERE SUBSTRING(pub_date FROM '(\d{4})') IS NOT NULL
+            GROUP BY year
+            ORDER BY year
+        """)
+        result = await self.db_session.execute(query)
+        return result.mappings().all()
+
     async def get_points_in_viewport(
         self,
         min_x: float,

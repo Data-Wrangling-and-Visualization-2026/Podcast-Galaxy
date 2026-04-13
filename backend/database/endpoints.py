@@ -235,6 +235,24 @@ async def search_episodes(
             return [ShowEpisode(**episode) for episode in episodes]
 
 
+@episode_router.get("/stats/topics", response_model=List[TopicEpisodeCount])
+async def get_episode_counts_by_topic() -> List[TopicEpisodeCount]:
+    async with async_session() as session:
+        async with session.begin():
+            point_dal = EpisodeMapPointDAL(session)
+            rows = await point_dal.get_episode_counts_by_topic()
+            return [TopicEpisodeCount(**row) for row in rows]
+
+
+@episode_router.get("/stats/years", response_model=List[YearEpisodeCount])
+async def get_episode_counts_by_year() -> List[YearEpisodeCount]:
+    async with async_session() as session:
+        async with session.begin():
+            point_dal = EpisodeMapPointDAL(session)
+            rows = await point_dal.get_episode_counts_by_year()
+            return [YearEpisodeCount(**row) for row in rows]
+
+
 @episode_router.post("/viewport", response_model=List[ViewportPoint])
 async def get_points_in_viewport(body: ViewportRequest) -> List[ViewportPoint]:
     async with async_session() as session:
