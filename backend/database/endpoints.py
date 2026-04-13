@@ -251,6 +251,36 @@ async def get_points_in_viewport(body: ViewportRequest) -> List[ViewportPoint]:
             return [ViewportPoint(**point) for point in points]
 
 
+@episode_router.post("/viewport/years", response_model=List[ViewportYearGroup])
+async def get_points_in_viewport_by_year(body: ViewportRequest) -> List[ViewportYearGroup]:
+    async with async_session() as session:
+        async with session.begin():
+            point_dal = EpisodeMapPointDAL(session)
+            points = await point_dal.get_points_in_viewport_grouped_by_year(
+                min_x=body.min_x,
+                max_x=body.max_x,
+                min_y=body.min_y,
+                max_y=body.max_y,
+            )
+
+            grouped_points: dict[int, list[ViewportPoint]] = {}
+            for point in points:
+                year = point["year"]
+                grouped_points.setdefault(year, []).append(
+                    ViewportPoint(
+                        episode_id=point["episode_id"],
+                        x=point["x"],
+                        y=point["y"],
+                        dominant_topic=point["dominant_topic"],
+                    )
+                )
+
+            return [
+                ViewportYearGroup(year=year, episodes=episodes)
+                for year, episodes in sorted(grouped_points.items())
+            ]
+
+
 @episode_router.get("/{episode_id}/hover", response_model=EpisodeHoverResponse)
 async def get_episode_hover(episode_id: uuid.UUID) -> EpisodeHoverResponse:
     async with async_session() as session:
@@ -305,27 +335,28 @@ async def create_episodes_batch(batch: BatchEpisodeCreate):
 
             for episode_data in batch.episodes:
                 try:
-                    existing = await session.execute(
-                        text("SELECT episode_id FROM episodes WHERE yandex_id = :yandex_id"),
-                        {"yandex_id": episode_data.yandex_id}
-                    )
+                    async with session.begin_nested():
+                        existing = await session.execute(
+                            text("SELECT episode_id FROM episodes WHERE yandex_id = :yandex_id"),
+                            {"yandex_id": episode_data.yandex_id}
+                        )
 
-                    if existing.first():
-                        results["skipped"] += 1
+                        if existing.first():
+                            results["skipped"] += 1
+                            results["details"].append({
+                                "yandex_id": episode_data.yandex_id,
+                                "status": "skipped",
+                                "reason": "already_exists"
+                            })
+                            continue
+
+                        episode = await episode_dal.create_episode(episode_data)
+                        results["created"] += 1
                         results["details"].append({
                             "yandex_id": episode_data.yandex_id,
-                            "status": "skipped",
-                            "reason": "already_exists"
+                            "episode_id": str(episode.episode_id),
+                            "status": "created"
                         })
-                        continue
-
-                    episode = await episode_dal.create_episode(episode_data)
-                    results["created"] += 1
-                    results["details"].append({
-                        "yandex_id": episode_data.yandex_id,
-                        "episode_id": str(episode.episode_id),
-                        "status": "created"
-                    })
 
                 except Exception as e:
                     results["failed"] += 1

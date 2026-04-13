@@ -51,6 +51,14 @@ class PodcastDAL:
         return result.mappings().first()
 
     async def delete_podcast(self, podcast_id: uuid.UUID) -> bool:
+        delete_map_points_query = text("""
+            DELETE FROM episode_map_points
+            WHERE episode_id IN (
+                SELECT episode_id FROM episodes WHERE podcast_id = :podcast_id
+            )
+        """)
+        await self.db_session.execute(delete_map_points_query, {"podcast_id": podcast_id})
+
         delete_episodes_query = text("DELETE FROM episodes WHERE podcast_id = :podcast_id")
         await self.db_session.execute(delete_episodes_query, {"podcast_id": podcast_id})
 
@@ -106,12 +114,23 @@ class EpisodeDAL:
         return result.mappings().all()
 
     async def delete_episode(self, episode_id: uuid.UUID) -> bool:
+        delete_map_point_query = text("DELETE FROM episode_map_points WHERE episode_id = :episode_id")
+        await self.db_session.execute(delete_map_point_query, {"episode_id": episode_id})
+
         query = text("DELETE FROM episodes WHERE episode_id = :episode_id RETURNING episode_id")
         result = await self.db_session.execute(query, {"episode_id": episode_id})
         await self.db_session.commit()
         return result.first() is not None
 
     async def delete_episodes_by_podcast(self, podcast_id: uuid.UUID) -> int:
+        delete_map_points_query = text("""
+            DELETE FROM episode_map_points
+            WHERE episode_id IN (
+                SELECT episode_id FROM episodes WHERE podcast_id = :podcast_id
+            )
+        """)
+        await self.db_session.execute(delete_map_points_query, {"podcast_id": podcast_id})
+
         query = text("DELETE FROM episodes WHERE podcast_id = :podcast_id RETURNING episode_id")
         result = await self.db_session.execute(query, {"podcast_id": podcast_id})
         await self.db_session.commit()
@@ -160,6 +179,38 @@ class EpisodeMapPointDAL:
                 "min_y": min_y,
                 "max_y": max_y,
                 "limit": limit,
+            },
+        )
+        return result.mappings().all()
+
+    async def get_points_in_viewport_grouped_by_year(
+        self,
+        min_x: float,
+        max_x: float,
+        min_y: float,
+        max_y: float,
+    ) -> Sequence[RowMapping]:
+        query = text("""
+            SELECT
+                emp.episode_id,
+                emp.umap_x AS x,
+                emp.umap_y AS y,
+                emp.dominant_topic,
+                CAST(SUBSTRING(e.pub_date FROM '(\d{4})') AS INTEGER) AS year
+            FROM episode_map_points emp
+            INNER JOIN episodes e ON e.episode_id = emp.episode_id
+            WHERE emp.umap_x BETWEEN :min_x AND :max_x
+              AND emp.umap_y BETWEEN :min_y AND :max_y
+              AND SUBSTRING(e.pub_date FROM '(\d{4})') IS NOT NULL
+            ORDER BY year, emp.episode_id
+        """)
+        result = await self.db_session.execute(
+            query,
+            {
+                "min_x": min_x,
+                "max_x": max_x,
+                "min_y": min_y,
+                "max_y": max_y,
             },
         )
         return result.mappings().all()

@@ -95,6 +95,11 @@ class ViewportPoint(BaseModel):
     dominant_topic: str
 
 
+class ViewportYearGroup(BaseModel):
+    year: int
+    episodes: List[ViewportPoint]
+
+
 class TopicScore(BaseModel):
     topic: str
     weight: float
