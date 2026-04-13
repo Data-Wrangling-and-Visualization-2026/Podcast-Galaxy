@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -109,9 +109,12 @@ class EpisodeHoverResponse(BaseModel):
     top_3_topics: List[TopicScore]
 
 
-def extract_top_topics(topic_scores_json: Optional[str], limit: int = 3) -> List[TopicScore]:
+def extract_top_topics(topic_scores_json: Optional[Union[str, dict]], limit: int = 3) -> List[TopicScore]:
     if not topic_scores_json:
         return []
+
+    if isinstance(topic_scores_json, dict):
+        topic_scores_json = json.dumps(topic_scores_json)
 
     try:
         topic_scores = json.loads(topic_scores_json)
