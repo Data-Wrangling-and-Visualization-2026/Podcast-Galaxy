@@ -43,16 +43,9 @@ The main goal is to help users see how Russian podcast content is distributed ac
 
 ## Topic Classification
 
-The semantic map is structured around a fixed thematic taxonomy. The entire system — from LLM classification to UI filters — is constrained to the following **22 core topics**:
+The semantic map is structured around a fixed thematic taxonomy. The entire system from LLM classification to UI filters is constrained to the following **22 core topics**:
 
 `politics` `science` `tech` `entertainment` `art` `education` `tourism` `economics` `law` `ecology` `style` `BBC` `sports` `psychology` `religion` `architecture` `medicine` `business` `food` `history` `relationship` `family`
-
-Each episode in the database carries a **topical probability distribution** across these dimensions, along with a designated dominant label and a weighted fingerprint for exploration.
-
-Each episode is assigned:
-- a full topic score distribution
-- a dominant topic
-- top topic weights for hover and analytics views
 
 ## Technical Architecture
 1. **Data Collection**
