@@ -1,6 +1,6 @@
 import { ViewportPoint, EpisodeDetails, YearStat, YearTopicStat } from '../types';
 
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const api = {
     async getPointsInViewport(bounds: { x1: number; y1: number; x2: number; y2: number }, limit: number = 5000): Promise<ViewportPoint[]> {
