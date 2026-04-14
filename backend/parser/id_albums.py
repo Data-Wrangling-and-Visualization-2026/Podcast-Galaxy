@@ -1,3 +1,5 @@
+"""collect yandex music album ids for a list of podcast categories."""
+
 import requests
 import re
 import json
@@ -7,6 +9,7 @@ from bs4 import BeautifulSoup
 
 
 def load_categories_from_file(filename="categories.txt"):
+    # read one category slug per line and ignore empty rows.
     categories = []
     try:
         with open(filename, 'r', encoding='utf-8') as f:
@@ -35,6 +38,7 @@ def fetch_album_ids_for_categories(category_list):
     }
 
     try:
+        # warm up the session to look more like a real browser before category requests.
         session.get('https://music.yandex.ru', headers=main_headers)
         time.sleep(2)
     except Exception as e:
@@ -89,6 +93,7 @@ def fetch_album_ids_for_categories(category_list):
                     if end_pos == -1:
                         continue
 
+                    # extract the embedded state snapshot instead of scraping rendered html.
                     json_str = text[start:end_pos]
                     try:
                         data = json.loads(json_str)
@@ -103,6 +108,7 @@ def fetch_album_ids_for_categories(category_list):
                                     ids_found_in_category += 1
                     except KeyError:
                         def find_album_ids(obj):
+                            # fallback to a recursive walk when the state shape changes.
                             ids = []
                             if isinstance(obj, dict):
                                 if 'id' in obj and isinstance(obj['id'], (int, str)):
@@ -146,6 +152,7 @@ def fetch_album_ids_for_categories(category_list):
     filename = f"album_ids_{len(category_list)}_categories_{timestamp}.txt"
 
     with open(filename, 'w', encoding='utf-8') as f:
+        # write sorted ids so repeated runs stay easy to diff.
         for album_id in sorted(all_album_ids):
             f.write(f"{album_id}\n")
 

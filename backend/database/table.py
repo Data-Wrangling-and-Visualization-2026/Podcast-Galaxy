@@ -1,3 +1,5 @@
+"""sqlalchemy table definitions for podcasts, episodes, and map points."""
+
 from sqlalchemy import Column, String, Integer, ForeignKey, Float, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
@@ -28,6 +30,7 @@ class Episode(Base):
     description = Column(String, nullable=True)
     duration = Column(Integer, nullable=False)
     podcast_id = Column(UUID(as_uuid=True), ForeignKey("podcasts.podcast_id"), nullable=False)
+    # pub_date stays as a string because imported source data is not fully normalized.
     pub_date = Column(String, nullable=True)
 
     podcast = relationship("Podcast", back_populates="episodes")
@@ -47,6 +50,7 @@ class EpisodeMapPoint(Base):
     umap_y = Column(Float, nullable=False, index=True)
     dominant_topic = Column(String, nullable=False)
     dominant_weight = Column(Float, nullable=True)
+    # store the full topic distribution so hover cards can show more than the dominant topic.
     topic_scores_json = Column(Text, nullable=False)
 
     episode = relationship("Episode", back_populates="map_point")

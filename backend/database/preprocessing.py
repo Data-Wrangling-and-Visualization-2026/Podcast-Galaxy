@@ -1,3 +1,5 @@
+"""utilities for auditing and cleaning low-quality episode records."""
+
 import asyncio
 import uuid
 import re
@@ -21,6 +23,7 @@ class DatabaseCleaner:
         if not text or not isinstance(text, str):
             return False
 
+        # strip urls and punctuation before measuring the cyrillic character ratio.
         cleaned_text = re.sub(r'https?://\S+|www\.\S+', '', text)
         cleaned_text = re.sub(r'[^\w\sа-яА-ЯёЁ]', '', cleaned_text)
 
@@ -43,6 +46,7 @@ class DatabaseCleaner:
         try:
             date_str = str(pub_date)
 
+            # imported dates are inconsistent, so extract the first 4-digit year we see.
             year_match = re.search(r'(\d{4})', date_str)
             if year_match:
                 return int(year_match.group(1))
@@ -56,6 +60,7 @@ class DatabaseCleaner:
         return None
 
     def _should_delete_episode(self, episode: Dict[str, Any]) -> Tuple[bool, List[str]]:
+        # collect all reasons first so cleanup can be audited before deletion.
         title = episode.get('title', '')
         title_cleaned = re.sub(r'[^\w\s]', '', title).strip() if title else ''
         description = episode.get('description', '')
@@ -108,6 +113,7 @@ class DatabaseCleaner:
         result = await session.execute(query, {"limit": limit * 5})
         candidates = result.mappings().all()
 
+        # sql narrows the candidate set, then python applies the final quality rules.
         for episode in candidates:
             should_delete, reasons = self._should_delete_episode(dict(episode))
             if should_delete:
@@ -175,6 +181,7 @@ class DatabaseCleaner:
             if not batch:
                 break
 
+            # batch iteration keeps memory usage stable on large datasets.
             for episode in batch:
                 should_delete, _ = self._should_delete_episode(dict(episode))
                 if should_delete:
@@ -199,6 +206,7 @@ class DatabaseCleaner:
                 for i in range(0, len(episode_ids), batch_size):
                     batch = episode_ids[i:i + batch_size]
                     if batch:
+                        # pass ids as strings so postgres can cast them into uuid values.
                         batch_str = [str(ep_id) for ep_id in batch]
                         query = text("""
                             DELETE FROM episodes 
@@ -292,6 +300,7 @@ class DatabaseCleaner:
                     print(f"will delete {len(episodes_to_delete):,} episodes")
                 else:
                     if episodes_to_delete:
+                        # run the destructive step only after the preview phase is complete.
                         print("\n" + "=" * 80)
                         print("STARTING DELETION...")
                         episode_ids = [ep[0] for ep in episodes_to_delete]
@@ -326,6 +335,7 @@ async def main():
         to_delete = await cleaner.run_cleanup(dry_run=True, show_preview=True)
 
         if to_delete > 0:
+            # require an explicit confirmation before the actual delete pass.
             print("\n" + "=" * 80)
             response = input(f"will delete {to_delete:,} episodes. Proceed with actual deletion? (y/n): ")
             if response.lower() == 'y':

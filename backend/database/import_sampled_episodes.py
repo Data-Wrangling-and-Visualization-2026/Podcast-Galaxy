@@ -1,3 +1,5 @@
+"""import sampled episode rows directly into postgres with asyncpg."""
+
 import asyncio
 import csv
 import os
@@ -9,6 +11,7 @@ import asyncpg
 
 
 def load_database_url() -> str:
+    # prefer the local .env file so the script can run outside the api app.
     env_path = Path(__file__).resolve().parent / ".env"
     if env_path.exists():
         for line in env_path.read_text(encoding="utf-8").splitlines():
@@ -27,6 +30,7 @@ def load_database_url() -> str:
 
 
 def normalize_database_url(database_url: str) -> str:
+    # asyncpg expects a plain postgresql url instead of sqlalchemy's async dialect prefix.
     prefix = "postgresql+asyncpg://"
     if database_url.startswith(prefix):
         return "postgresql://" + database_url[len(prefix):]
@@ -48,6 +52,7 @@ async def import_csv(csv_path: Path) -> None:
                     episode_id = uuid.UUID(row["episode_id"])
                     podcast_id = uuid.UUID(row["podcast_id"])
                     yandex_id = (row.get("yandex_id") or "").strip() or None
+                    # imported csv files use empty strings and literal null markers interchangeably.
                     description = row.get("description")
                     description = description if description not in ("", "NULL") else None
                     pub_date = row.get("pub_date")

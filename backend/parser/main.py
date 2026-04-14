@@ -1,3 +1,5 @@
+"""import yandex music podcasts into the local podcast api."""
+
 import httpx
 import asyncio
 import random
@@ -11,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def read_album_ids_from_file(filename: str) -> List[int]:
+    # support comment lines so the import list can be curated manually.
     ids = []
     try:
         with open(filename, 'r', encoding='utf-8') as f:
@@ -28,7 +31,7 @@ def read_album_ids_from_file(filename: str) -> List[int]:
 
 
 async def fetch_with_delay(client: httpx.AsyncClient, url: str, delay_between_requests: float) -> Dict[str, Any]:
-
+    # add small jitter to reduce repetitive request patterns.
     jitter = random.uniform(0.8, 1.2)
     actual_delay = delay_between_requests * jitter
 
@@ -47,6 +50,7 @@ async def fetch_with_delay(client: httpx.AsyncClient, url: str, delay_between_re
     if resp.status_code == 200:
         return resp.json()
     elif resp.status_code == 302:
+        # yandex often uses redirects as a captcha signal for aggressive scraping.
         logger.error(f"Got captcha (302) for {url}. Need to increase delay between requests.")
         raise Exception("Captcha triggered - need longer delay between requests")
     else:
@@ -93,6 +97,7 @@ async def import_yandex_album(
         "track_count": album_data.get("trackCount"),
     }
 
+    # drop nulls so the api only receives fields we actually know.
     podcast_payload = {k: v for k, v in podcast_payload.items() if v is not None}
 
     try:
@@ -171,6 +176,7 @@ async def import_yandex_album(
                     episodes_skipped += len(batch)
                     logger.info(f"All {len(batch)} episodes in batch already exist")
                 else:
+                    # keep the import moving even if the batch endpoint is unavailable.
                     logger.warning("Batch endpoint not available, falling back to individual requests")
                     for episode in batch:
                         try:
@@ -265,7 +271,7 @@ async def import_multiple_albums(
         else:
             logger.info(f"Progress: {idx}/{len(album_ids)} failed")
 
-        # If we got a captcha, increase delay for future requests
+        # if yandex starts rate-limiting, back off for later albums.
         if "captcha" in result.get("error", "").lower():
             delay_between_requests *= 1.001
             logger.info(f"Captcha detected, increasing delay to {delay_between_requests:.1f}s")

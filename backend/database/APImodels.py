@@ -1,3 +1,5 @@
+"""pydantic models used by the database api layer."""
+
 import json
 import uuid
 from typing import List, Optional, Union
@@ -73,6 +75,7 @@ class ViewportRequest(BaseModel):
 
     @property
     def min_x(self) -> float:
+        # accept any corner ordering from the frontend.
         return min(self.x1, self.x2)
 
     @property
@@ -129,6 +132,7 @@ def extract_top_topics(topic_scores_json: Optional[Union[str, dict]], limit: int
         return []
 
     if isinstance(topic_scores_json, dict):
+        # some callers may already deserialize the json payload for us.
         topic_scores_json = json.dumps(topic_scores_json)
 
     try:
@@ -151,6 +155,7 @@ def extract_top_topics(topic_scores_json: Optional[Union[str, dict]], limit: int
             continue
         ranked_topics.append((str(topic), numeric_weight))
 
+    # return the strongest topics in descending score order.
     ranked_topics.sort(key=lambda item: item[1], reverse=True)
 
     return [TopicScore(topic=topic, weight=weight) for topic, weight in ranked_topics[:limit]]

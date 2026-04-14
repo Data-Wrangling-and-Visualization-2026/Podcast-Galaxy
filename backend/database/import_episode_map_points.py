@@ -1,3 +1,5 @@
+"""import precomputed umap points and topic weights into the database."""
+
 import asyncio
 import csv
 import json
@@ -22,6 +24,7 @@ KNOWN_COLUMNS = {
 
 
 def build_topic_scores(row: dict[str, str]) -> str:
+    # every non-core csv column is treated as a topic score.
     topic_scores: dict[str, float] = {}
     for key, value in row.items():
         if key in KNOWN_COLUMNS:
@@ -49,6 +52,7 @@ async def import_csv(csv_path: Path) -> None:
 
                     await session.execute(
                         text("""
+                            -- upsert keeps repeated imports idempotent.
                             INSERT INTO episode_map_points (
                                 episode_id,
                                 umap_x,
@@ -93,6 +97,7 @@ def main() -> None:
     if len(sys.argv) > 1:
         csv_path = Path(sys.argv[1])
     else:
+        # default to the project data export when no path is provided.
         csv_path = Path(__file__).resolve().parent.parent.parent / "data" / "podcast_umap_2d_results.csv"
 
     if not csv_path.exists():

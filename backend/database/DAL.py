@@ -1,3 +1,5 @@
+"""data access layer for raw sql queries used by the api and maintenance scripts."""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import RowMapping
 from sqlalchemy import text, Sequence
@@ -9,6 +11,7 @@ from typing import List, Optional
 
 
 def model_to_dict(model):
+    # convert orm instances into plain dictionaries for response models.
     return {c.key: getattr(model, c.key) for c in class_mapper(model.__class__).columns}
 
 
@@ -38,6 +41,7 @@ class PodcastDAL:
         return result.mappings().all()
 
     async def update_podcast(self, podcast_id: uuid.UUID, update_data: dict) -> RowMapping | None:
+        # build the set clause dynamically from provided patch fields.
         set_clause = ", ".join([f"{key} = :{key}" for key in update_data.keys()])
         query = text(f"""
             UPDATE podcasts 
@@ -51,6 +55,7 @@ class PodcastDAL:
         return result.mappings().first()
 
     async def delete_podcast(self, podcast_id: uuid.UUID) -> bool:
+        # raw sql deletes do not trigger orm cascades, so remove map rows first.
         delete_map_points_query = text("""
             DELETE FROM episode_map_points
             WHERE episode_id IN (
@@ -85,6 +90,7 @@ class EpisodeDAL:
         limit: int = 20,
         podcast_id: Optional[uuid.UUID] = None,
     ) -> Sequence[RowMapping]:
+        # keep the query flexible so list and filtered views share the same sql.
         conditions = []
         params = {"skip": skip, "limit": limit}
 
@@ -114,6 +120,7 @@ class EpisodeDAL:
         return result.mappings().all()
 
     async def delete_episode(self, episode_id: uuid.UUID) -> bool:
+        # delete the related map point manually because the database fk is not cascading.
         delete_map_point_query = text("DELETE FROM episode_map_points WHERE episode_id = :episode_id")
         await self.db_session.execute(delete_map_point_query, {"episode_id": episode_id})
 
@@ -123,6 +130,7 @@ class EpisodeDAL:
         return result.first() is not None
 
     async def delete_episodes_by_podcast(self, podcast_id: uuid.UUID) -> int:
+        # clean derived map data before removing the parent episodes.
         delete_map_points_query = text("""
             DELETE FROM episode_map_points
             WHERE episode_id IN (
@@ -152,6 +160,7 @@ class EpisodeMapPointDAL:
         self.db_session = db_session
 
     async def get_episode_counts_by_year_and_topic(self) -> Sequence[RowMapping]:
+        # derive the year from pub_date because it is stored as a string.
         query = text("""
             SELECT
                 CAST(SUBSTRING(pub_date FROM '(\d{4})') AS INTEGER) AS year,
@@ -173,6 +182,7 @@ class EpisodeMapPointDAL:
         min_y: float,
         max_y: float,
     ) -> Sequence[RowMapping]:
+        # reuse the same aggregate shape, but constrain it to the visible map area.
         query = text("""
             SELECT
                 CAST(SUBSTRING(e.pub_date FROM '(\d{4})') AS INTEGER) AS year,
@@ -205,6 +215,7 @@ class EpisodeMapPointDAL:
         max_y: float,
         limit: int = 5000,
     ) -> Sequence[RowMapping]:
+        # this is the lightweight point feed used by the map itself.
         query = text("""
             SELECT
                 episode_id,
@@ -236,6 +247,7 @@ class EpisodeMapPointDAL:
         min_y: float,
         max_y: float,
     ) -> Sequence[RowMapping]:
+        # return flat rows here and let the endpoint shape them for the timeline.
         query = text("""
             SELECT
                 emp.episode_id,
@@ -262,6 +274,7 @@ class EpisodeMapPointDAL:
         return result.mappings().all()
 
     async def get_hover_details(self, episode_id: uuid.UUID) -> RowMapping | None:
+        # hover cards need both episode metadata and topic summary data.
         query = text("""
             SELECT
                 e.episode_id,
