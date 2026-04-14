@@ -1,94 +1,127 @@
-import { useState, useCallback, useEffect } from 'react';
-import { ViewportPoint, EpisodeDetails, YearStat, YearTopicStat, Topic } from '../types';
+/**
+ * Custom hook for managing podcast data state
+ * Handles points loading, filtering, and year selection
+ */
+
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { api } from '../services/api';
 
-export const usePodcastData = () => {
-    const [allPoints, setAllPoints] = useState<ViewportPoint[]>([]);
-    const [filteredPoints, setFilteredPoints] = useState<ViewportPoint[]>([]);
-    const [selectedEpisode, setSelectedEpisode] = useState<EpisodeDetails | null>(null);
-    const [yearStats, setYearStats] = useState<YearStat[]>([]);
-    const [topicStats, setTopicStats] = useState<YearTopicStat[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [selectedYear, setSelectedYear] = useState<number | null>(null);
-    const [selectedTopics, setSelectedTopics] = useState<Set<Topic>>(new Set());
-    const [searchQuery, setSearchQuery] = useState('');
-    const [hoveredTopic, setHoveredTopic] = useState<Topic | null>(null);
+// Кэш для предзагруженных тайлов
+const tileCache = new Map();
 
-    useEffect(() => {
-        loadStats();
+export const usePodcastData = () => {
+    const [points, setPoints] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [selectedYear, setSelectedYear] = useState(null);
+    const currentBoundsRef = useRef(null);
+    const zoomTimeoutRef = useRef(null);
+    const preloadTimeoutRef = useRef(null);
+
+    // Функция для расширения границ (предзагрузка соседних тайлов)
+    const getExtendedBounds = useCallback((bounds, padding = 0.3) => {
+        const width = bounds.x2 - bounds.x1;
+        const height = bounds.y2 - bounds.y1;
+
+        return {
+            x1: bounds.x1 - width * padding,
+            y1: bounds.y1 - height * padding,
+            x2: bounds.x2 + width * padding,
+            y2: bounds.y2 + height * padding,
+        };
     }, []);
 
-    const loadStats = async () => {
-        const topics = await api.getYearTopicStats();
-        const years = await api.getYearStats();
-        setTopicStats(topics);
-        setYearStats(years);
-    };
+    // Функция для разбиения области на тайлы (для предзагрузки)
+    const getTiles = useCallback((bounds, tileSize = 5) => {
+        const tiles = [];
+        const xSteps = Math.ceil((bounds.x2 - bounds.x1) / tileSize);
+        const ySteps = Math.ceil((bounds.y2 - bounds.y1) / tileSize);
 
-    const loadPointsByYear = useCallback(async (year: number) => {
+        for (let i = 0; i <= xSteps; i++) {
+            for (let j = 0; j <= ySteps; j++) {
+                tiles.push({
+                    x1: bounds.x1 + i * tileSize,
+                    x2: bounds.x1 + (i + 1) * tileSize,
+                    y1: bounds.y1 + j * tileSize,
+                    y2: bounds.y1 + (j + 1) * tileSize,
+                });
+            }
+        }
+        return tiles;
+    }, []);
+
+    // Загрузка точек с плавным переходом
+    const loadPointsSmooth = useCallback(async (bounds, year = null) => {
+        if (!bounds) return;
+
         setLoading(true);
+        currentBoundsRef.current = bounds;
+
         try {
-            const points = await api.getPointsByYear(year);
-            console.log(`Loaded ${points.length} points for year ${year}`);
-            setAllPoints(points);
-            setSelectedYear(year);
+            // Сначала загружаем основные точки
+            const mainPoints = year
+                ? await api.getPointsByYear(year, bounds)
+                : await api.getPointsInViewport(bounds);
+
+            setPoints(mainPoints);
+
+            // Предзагружаем соседние тайлы
+            const extendedBounds = getExtendedBounds(bounds);
+            const tiles = getTiles(extendedBounds);
+
+            // Загружаем тайлы, которых нет в кэше
+            for (const tile of tiles) {
+                const tileKey = `${tile.x1}_${tile.y1}_${tile.x2}_${tile.y2}_${year || 'all'}`;
+
+                if (!tileCache.has(tileKey)) {
+                    tileCache.set(tileKey, true);
+
+                    // Фоновая загрузка
+                    setTimeout(async () => {
+                        const preloadPoints = year
+                            ? await api.getPointsByYear(year, tile)
+                            : await api.getPointsInViewport(tile);
+
+                        tileCache.set(tileKey, preloadPoints);
+                    }, 100);
+                }
+            }
         } catch (error) {
             console.error('Error loading points:', error);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [getExtendedBounds, getTiles]);
 
-    const resetYearFilter = useCallback(() => {
-        setAllPoints([]);
-        setSelectedYear(null);
-    }, []);
+    // Обработчик изменения зума с плавностью
+    const handleZoomChange = useCallback((newBounds, zoomLevel) => {
+        // Очищаем предыдущий таймаут
+        if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
 
-    const applyFilters = useCallback(() => {
-        let filtered = [...allPoints];
-
-        if (selectedTopics.size > 0) {
-            filtered = filtered.filter(p => selectedTopics.has(p.dominant_topic));
+        // Показываем приблизительные точки (из кэша)
+        if (tileCache.size > 0) {
+            const cachedPoints = [];
+            for (const [_, cachedData] of tileCache) {
+                if (Array.isArray(cachedData)) {
+                    cachedPoints.push(...cachedData);
+                }
+            }
+            if (cachedPoints.length > 0) {
+                setPoints(cachedPoints);
+            }
         }
 
-        if (searchQuery) {
-            filtered = filtered.filter(p =>
-                p.episode_id.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
-
-        setFilteredPoints(filtered);
-    }, [allPoints, selectedTopics, searchQuery]);
-
-    useEffect(() => {
-        applyFilters();
-    }, [applyFilters]);
-
-    const toggleTopic = useCallback((topic: Topic) => {
-        setSelectedTopics(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(topic)) newSet.delete(topic);
-            else newSet.add(topic);
-            return newSet;
-        });
-    }, []);
+        // Загружаем точные точки после остановки зума
+        zoomTimeoutRef.current = setTimeout(() => {
+            loadPointsSmooth(newBounds, selectedYear);
+        }, 200);
+    }, [loadPointsSmooth, selectedYear]);
 
     return {
-        points: filteredPoints,
-        allPoints,
-        selectedEpisode,
-        yearStats,
-        topicStats,
+        points,
         loading,
         selectedYear,
-        hoveredTopic,
-        loadPointsByYear,
-        resetYearFilter,
-        setSelectedEpisode,
-        toggleTopic,
-        selectedTopics,
-        searchQuery,
-        setSearchQuery,
-        setHoveredTopic
+        loadPointsSmooth,
+        handleZoomChange,
+        setSelectedYear,
     };
 };
