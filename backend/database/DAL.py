@@ -151,29 +151,50 @@ class EpisodeMapPointDAL:
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 
-    async def get_episode_counts_by_topic(self) -> Sequence[RowMapping]:
+    async def get_episode_counts_by_year_and_topic(self) -> Sequence[RowMapping]:
         query = text("""
             SELECT
-                dominant_topic AS topic,
+                CAST(SUBSTRING(pub_date FROM '(\d{4})') AS INTEGER) AS year,
+                emp.dominant_topic AS topic,
                 COUNT(*) AS count
-            FROM episode_map_points
-            GROUP BY dominant_topic
-            ORDER BY count DESC, dominant_topic
+            FROM episodes e
+            INNER JOIN episode_map_points emp ON emp.episode_id = e.episode_id
+            WHERE SUBSTRING(e.pub_date FROM '(\d{4})') IS NOT NULL
+            GROUP BY year, emp.dominant_topic
+            ORDER BY year, count DESC, emp.dominant_topic
         """)
         result = await self.db_session.execute(query)
         return result.mappings().all()
 
-    async def get_episode_counts_by_year(self) -> Sequence[RowMapping]:
+    async def get_episode_counts_in_viewport_by_year_and_topic(
+        self,
+        min_x: float,
+        max_x: float,
+        min_y: float,
+        max_y: float,
+    ) -> Sequence[RowMapping]:
         query = text("""
             SELECT
-                CAST(SUBSTRING(pub_date FROM '(\d{4})') AS INTEGER) AS year,
+                CAST(SUBSTRING(e.pub_date FROM '(\d{4})') AS INTEGER) AS year,
+                emp.dominant_topic AS topic,
                 COUNT(*) AS count
-            FROM episodes
-            WHERE SUBSTRING(pub_date FROM '(\d{4})') IS NOT NULL
-            GROUP BY year
-            ORDER BY year
+            FROM episode_map_points emp
+            INNER JOIN episodes e ON e.episode_id = emp.episode_id
+            WHERE emp.umap_x BETWEEN :min_x AND :max_x
+              AND emp.umap_y BETWEEN :min_y AND :max_y
+              AND SUBSTRING(e.pub_date FROM '(\d{4})') IS NOT NULL
+            GROUP BY year, emp.dominant_topic
+            ORDER BY year, count DESC, emp.dominant_topic
         """)
-        result = await self.db_session.execute(query)
+        result = await self.db_session.execute(
+            query,
+            {
+                "min_x": min_x,
+                "max_x": max_x,
+                "min_y": min_y,
+                "max_y": max_y,
+            },
+        )
         return result.mappings().all()
 
     async def get_points_in_viewport(

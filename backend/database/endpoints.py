@@ -235,22 +235,47 @@ async def search_episodes(
             return [ShowEpisode(**episode) for episode in episodes]
 
 
-@episode_router.get("/stats/topics", response_model=List[TopicEpisodeCount])
-async def get_episode_counts_by_topic() -> List[TopicEpisodeCount]:
+@episode_router.get("/stats/year-topics", response_model=List[YearTopicStats])
+async def get_episode_counts_by_year_and_topic() -> List[YearTopicStats]:
     async with async_session() as session:
         async with session.begin():
             point_dal = EpisodeMapPointDAL(session)
-            rows = await point_dal.get_episode_counts_by_topic()
-            return [TopicEpisodeCount(**row) for row in rows]
+            rows = await point_dal.get_episode_counts_by_year_and_topic()
+
+            grouped_rows: dict[int, list[TopicCount]] = {}
+            for row in rows:
+                grouped_rows.setdefault(row["year"], []).append(
+                    TopicCount(topic=row["topic"], count=row["count"])
+                )
+
+            return [
+                YearTopicStats(year=year, topics=topics)
+                for year, topics in grouped_rows.items()
+            ]
 
 
-@episode_router.get("/stats/years", response_model=List[YearEpisodeCount])
-async def get_episode_counts_by_year() -> List[YearEpisodeCount]:
+@episode_router.post("/viewport/year-topics", response_model=List[YearTopicStats])
+async def get_episode_counts_in_viewport_by_year_and_topic(body: ViewportRequest) -> List[YearTopicStats]:
     async with async_session() as session:
         async with session.begin():
             point_dal = EpisodeMapPointDAL(session)
-            rows = await point_dal.get_episode_counts_by_year()
-            return [YearEpisodeCount(**row) for row in rows]
+            rows = await point_dal.get_episode_counts_in_viewport_by_year_and_topic(
+                min_x=body.min_x,
+                max_x=body.max_x,
+                min_y=body.min_y,
+                max_y=body.max_y,
+            )
+
+            grouped_rows: dict[int, list[TopicCount]] = {}
+            for row in rows:
+                grouped_rows.setdefault(row["year"], []).append(
+                    TopicCount(topic=row["topic"], count=row["count"])
+                )
+
+            return [
+                YearTopicStats(year=year, topics=topics)
+                for year, topics in grouped_rows.items()
+            ]
 
 
 @episode_router.post("/viewport", response_model=List[ViewportPoint])

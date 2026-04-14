@@ -100,14 +100,14 @@ class ViewportYearGroup(BaseModel):
     episodes: List[ViewportPoint]
 
 
-class TopicEpisodeCount(BaseModel):
+class TopicCount(BaseModel):
     topic: str
     count: int
 
 
-class YearEpisodeCount(BaseModel):
+class YearTopicStats(BaseModel):
     year: int
-    count: int
+    topics: List[TopicCount]
 
 
 class TopicScore(BaseModel):
