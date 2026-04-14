@@ -1,3 +1,8 @@
+/**
+ * Line chart component for topic evolution over time
+ * Shows all 22 topics with interactive legend and tooltips
+ */
+
 import React, { useMemo, useState, useCallback } from 'react';
 import {
     LineChart,

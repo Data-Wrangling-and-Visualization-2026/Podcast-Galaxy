@@ -1,3 +1,8 @@
+/**
+ * Central types and interfaces for the Podcast Galaxy application
+ * Defines data structures: map points, episodes, year and topic statistics
+ */
+
 export const TOPICS = [
     'politics',
     'science',

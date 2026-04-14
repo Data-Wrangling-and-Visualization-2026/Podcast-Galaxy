@@ -1,3 +1,8 @@
+/**
+ * Left sidebar with topic filters
+ * Clickable chips for toggling topic visibility on map
+ */
+
 import React from 'react';
 import { Topic, TOPICS } from '../../types';
 import { TOPIC_COLORS } from '../../utils/colors';

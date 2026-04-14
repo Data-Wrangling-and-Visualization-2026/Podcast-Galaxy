@@ -1,3 +1,8 @@
+/**
+ * Color scheme for 22 podcast categories
+ * Unique colors for each topic, used on map and line chart
+ */
+
 import { Topic, TOPICS } from '../types';
 
 export const TOPIC_COLORS: Record<Topic, string> = {

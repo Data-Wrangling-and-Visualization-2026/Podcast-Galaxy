@@ -1,3 +1,8 @@
+/**
+ * Timeline slider component for year selection
+ * Supports single year and range mode with animated star handles
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './YearSlider.css';
 

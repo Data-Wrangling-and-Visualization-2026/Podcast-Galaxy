@@ -1,4 +1,8 @@
-// src/components/EpisodeDetails/EpisodeDetails.tsx
+/**
+ * Episode details panel
+ * Shows full episode information on point click
+ */
+
 import React from 'react';
 import { EpisodeDetails as EpisodeDetailsType } from '../../types';
 import { TOPIC_COLORS } from '../../utils/colors';
