@@ -1,0 +1,403 @@
+.timeline-container {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    background: rgba(10, 10, 20, 0.92);
+    backdrop-filter: blur(12px);
+    border-radius: 14px;
+    padding: 12px 18px;
+    z-index: 10;
+    border: 1px solid rgba(0, 122, 255, 0.2);
+    transition: all 0.2s ease;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.timeline-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #666;
+}
+
+.timeline-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.timeline-mode-btn, .timeline-reset-btn {
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid;
+}
+
+.timeline-mode-btn {
+    background: rgba(0, 122, 255, 0.1);
+    border-color: rgba(0, 122, 255, 0.3);
+    color: #007AFF;
+}
+
+.timeline-mode-btn.active {
+    background: rgba(0, 122, 255, 0.25);
+    border-color: #007AFF;
+}
+
+.timeline-mode-btn:hover {
+    background: rgba(0, 122, 255, 0.2);
+}
+
+.timeline-reset-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #aaa;
+}
+
+.timeline-reset-btn:hover {
+    background: rgba(255, 59, 48, 0.15);
+    border-color: #FF3B30;
+    color: #FF3B30;
+}
+
+.timeline-slider-container {
+    position: relative;
+    padding: 8px 0 20px;
+}
+
+.timeline-track {
+    position: relative;
+    height: 40px;
+    margin: 0 4px;
+}
+
+.timeline-line {
+    position: absolute;
+    top: 18px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1px;
+}
+
+.timeline-range {
+    position: absolute;
+    top: 18px;
+    height: 2px;
+    background: linear-gradient(90deg, #007AFF, #00C7BE);
+    border-radius: 1px;
+    transition: left 0.1s ease, width 0.1s ease;
+}
+
+/* Звездочки */
+.timeline-handle {
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
+    cursor: pointer;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.star-handle {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    transition: transform 0.15s ease;
+}
+
+.timeline-handle:hover .star-handle {
+    transform: scale(1.15);
+}
+
+.star-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 7px;
+    height: 7px;
+    background: radial-gradient(circle, #fff, #007AFF);
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.star-rays {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+}
+
+.star-rays span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent, #007AFF, transparent);
+    transform-origin: center;
+}
+
+.star-rays span:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg); }
+.star-rays span:nth-child(2) { transform: translate(-50%, -50%) rotate(45deg); }
+.star-rays span:nth-child(3) { transform: translate(-50%, -50%) rotate(90deg); }
+.star-rays span:nth-child(4) { transform: translate(-50%, -50%) rotate(135deg); }
+
+.handle-tooltip {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #007AFF;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.timeline-handle:hover .handle-tooltip {
+    opacity: 1;
+    bottom: 32px;
+}
+
+/* Ползунки - интерактивная область */
+.timeline-input {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 40px;
+    opacity: 0;
+    cursor: pointer;
+    -webkit-appearance: none;
+    background: transparent;
+    z-index: 10;
+}
+
+.timeline-input-start {
+    left: 0;
+}
+
+.timeline-input-end {
+    left: 0;
+}
+
+.timeline-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 40px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.timeline-input::-webkit-slider-runnable-track {
+    height: 40px;
+    background: transparent;
+}
+
+.timeline-labels {
+    position: relative;
+    margin-top: 8px;
+    height: 28px;
+}
+
+.timeline-label {
+    position: absolute;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.timeline-label:hover {
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.label-marker {
+    width: 1px;
+    height: 6px;
+    background: #444;
+    margin-bottom: 4px;
+    transition: all 0.15s ease;
+}
+
+.timeline-label.in-range .label-marker {
+    background: #007AFF;
+    height: 8px;
+}
+
+.timeline-label.edge .label-marker {
+    background: #00C7BE;
+    height: 10px;
+}
+
+.label-year {
+    font-size: 10px;
+    color: #555;
+    transition: color 0.15s ease;
+}
+
+.timeline-label.in-range .label-year {
+    color: #007AFF;
+}
+
+.timeline-label.edge .label-year {
+    color: #00C7BE;
+    font-weight: 600;
+}
+
+.timeline-label:hover .label-year {
+    color: #fff;
+}
+
+.timeline-footer {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.timeline-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.range-label, .single-label {
+    color: #666;
+    letter-spacing: 1px;
+}
+
+.range-value {
+    color: #00C7BE;
+}
+
+.single-value {
+    color: #007AFF;
+}
+
+@media (max-width: 1000px) {
+    .timeline-container {
+        padding: 10px 14px;
+    }
+
+    .label-year {
+        font-size: 9px;
+    }
+
+    .star-handle {
+        width: 18px;
+        height: 18px;
+    }
+
+    .star-rays span {
+        width: 14px;
+    }
+
+    .star-core {
+        width: 5px;
+        height: 5px;
+    }
+}
+\
+/* Добавить в конец файла YearSlider.css */
+
+.timeline-range.single-range {
+    background: linear-gradient(90deg, #007AFF, #007AFF);
+}
+
+.timeline-mode-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #aaa;
+}
+
+.timeline-mode-btn.active {
+    background: rgba(0, 122, 255, 0.25);
+    border-color: #007AFF;
+    color: #007AFF;
+}
+
+.timeline-label.active .label-marker {
+    background: #007AFF;
+    height: 10px;
+}
+
+.timeline-label.edge .label-marker {
+    background: #00C7BE;
+    height: 10px;
+}
+
+.timeline-label.active .label-year {
+    color: #007AFF;
+    font-weight: 600;
+}
+
+.timeline-label.edge .label-year {
+    color: #00C7BE;
+    font-weight: 600;
+}
+
+.timeline-range.all-range {
+    background: linear-gradient(90deg, #888, #aaa);
+    opacity: 0.3;
+}
+
+.all-label {
+    color: #aaa;
+    letter-spacing: 1px;
+    font-size: 10px;
+}
+
+.timeline-container.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.timeline-container.disabled .timeline-handle {
+    cursor: not-allowed;
+}
+
+.timeline-container.disabled button {
+    cursor: not-allowed;
+}
+
+/* Добавить в конец файла */
+.timeline-container.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.timeline-container.loading .timeline-handle {
+    cursor: not-allowed;
+}
+
+.timeline-container.loading .timeline-input {
+    cursor: not-allowed;
+}
+
+.timeline-container.loading button {
+    cursor: not-allowed;
+}

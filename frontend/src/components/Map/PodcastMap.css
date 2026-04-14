@@ -1,0 +1,417 @@
+.podcast-map-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a0a0f 0%, #0f0f1a 100%);
+}
+
+/* Hover Tooltip - легкий, минималистичный */
+.map-hover-tooltip {
+    position: absolute;
+    background: rgba(10, 10, 20, 0.95);
+    backdrop-filter: blur(16px);
+    border-radius: 12px;
+    padding: 8px 14px;
+    max-width: 240px;
+    z-index: 1000;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: tooltipFadeIn 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    transform-origin: left top;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.hover-tooltip-topic {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 2px solid;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ccc;
+}
+
+.hover-tooltip-id {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+}
+
+/* Episode Tooltip - полное описание, центр экрана */
+.episode-tooltip {
+    position: absolute;
+    background: rgba(15, 15, 25, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 28px;
+    max-width: 420px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1001;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 122, 255, 0.3);
+    animation: modalFadeIn 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.episode-tooltip.animate-in {
+    animation: modalPop 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes modalPop {
+    0% {
+        transform: translate(-50%, -50%) scale(0.95);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.02);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.tooltip-close {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #888;
+    font-size: 24px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+}
+
+.tooltip-close:hover {
+    background: rgba(255, 59, 48, 0.2);
+    color: #FF3B30;
+    transform: rotate(90deg) scale(1.05);
+}
+
+.tooltip-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 50px;
+    color: #888;
+}
+
+.loading-spinner-small {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #007AFF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.tooltip-topic-badge {
+    display: inline-block;
+    padding: 5px 14px;
+    background: rgba(0, 122, 255, 0.15);
+    border-left: 3px solid;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #fff;
+}
+
+.tooltip-title {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+}
+
+.tooltip-podcast {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tooltip-description {
+    color: #aaa;
+    font-size: 13px;
+    line-height: 1.55;
+    margin-bottom: 22px;
+}
+
+.tooltip-topics {
+    margin-bottom: 22px;
+}
+
+.tooltip-topics-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.tooltip-topic-item {
+    margin-bottom: 12px;
+}
+
+.tooltip-topic-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.tooltip-topic-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.tooltip-topic-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #888;
+}
+
+/* Scrollbar for tooltip */
+.episode-tooltip::-webkit-scrollbar {
+    width: 5px;
+}
+
+.episode-tooltip::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.episode-tooltip::-webkit-scrollbar-thumb {
+    background: rgba(0, 122, 255, 0.5);
+    border-radius: 3px;
+}
+
+.episode-tooltip::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 122, 255, 0.7);
+}
+
+/* Glow effect animation for selected point */
+@keyframes pointGlow {
+    0% {
+        filter: drop-shadow(0 0 0px rgba(0, 122, 255, 0));
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(0, 122, 255, 0.8));
+    }
+    100% {
+        filter: drop-shadow(0 0 0px rgba(0, 122, 255, 0));
+    }
+}
+
+/* Particles effect for clicks */
+.click-particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particleBurst 0.7s ease-out forwards;
+    z-index: 1002;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes particleBurst {
+    0% {
+        transform: scale(1) translate(0, 0);
+        opacity: 0.9;
+    }
+    30% {
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(0) translate(var(--tx, 0), var(--ty, 0));
+        opacity: 0;
+    }
+}
+
+/* Wave ripple effect on click */
+.click-ripple {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: rippleExpand 0.5s ease-out forwards;
+    z-index: 1002;
+    background: radial-gradient(circle, rgba(0, 122, 255, 0.4) 0%, rgba(0, 122, 255, 0) 70%);
+}
+
+@keyframes rippleExpand {
+    0% {
+        transform: scale(0);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(15);
+        opacity: 0;
+    }
+}
+
+/* Smooth zoom animation */
+.deckgl-canvas {
+    transition: all 0.2s ease-out;
+}
+
+/* Point entrance animation */
+.point-entrance {
+    animation: pointAppear 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+@keyframes pointAppear {
+    from {
+        opacity: 0;
+        transform: scale(0);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Добавить в конец файла */
+
+.tooltip-description-wrapper {
+    margin-bottom: 20px;
+}
+
+.see-more-btn {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 0;
+    margin-top: 4px;
+    transition: color 0.2s ease;
+}
+
+.see-more-btn:hover {
+    color: #00C7BE;
+    text-decoration: underline;
+}
+
+/* Стили для подписи подкаста */
+.tooltip-podcast {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.podcast-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.podcast-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: #ccc;
+    flex: 1;
+}
+
+/* Описание в одной строке */
+.description-inline {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.description-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.tooltip-description {
+    color: #aaa;
+    font-size: 12px;
+    line-height: 1.5;
+    flex: 1;
+}
+
+.see-more-btn-inline {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.see-more-btn-inline:hover {
+    color: #00C7BE;
+    text-decoration: underline;
+}

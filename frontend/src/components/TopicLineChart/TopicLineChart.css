@@ -1,0 +1,234 @@
+.topic-chart-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    gap: 12px;
+}
+
+/* Кнопки управления */
+.chart-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.chart-dropdown {
+    flex: 1;
+}
+
+.topic-select {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(20, 20, 30, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+}
+
+.chart-reset-btn {
+    padding: 8px 16px;
+    background: rgba(255, 59, 48, 0.15);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    border-radius: 8px;
+    color: #FF3B30;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.chart-reset-btn:hover {
+    background: rgba(255, 59, 48, 0.25);
+}
+
+/* Легенда - 4 колонки */
+.chart-legend-wrapper {
+    flex-shrink: 0;
+    background: rgba(20, 20, 30, 0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+}
+
+.legend-title {
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.legend-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.legend-item.hidden {
+    opacity: 0.5;
+}
+
+.legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.legend-name {
+    font-size: 10px;
+    font-weight: 500;
+    color: #ccc;
+}
+
+.legend-item.hidden .legend-name {
+    color: #666;
+    text-decoration: line-through;
+}
+
+/* Основная область графика */
+.chart-main {
+    flex: 1;
+    min-height: 360px;
+    background: rgba(20, 20, 30, 0.2);
+    border-radius: 12px;
+    padding: 6px;
+}
+/* Тултип - 2 колонки, компактный */
+.custom-tooltip {
+    background: rgba(10, 10, 20, 0.98);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 122, 255, 0.3);
+    border-radius: 10px;
+    padding: 10px;
+    min-width: 320px;
+    max-width: 360px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    margin-top: -20px;
+}
+
+.custom-tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-tooltip-year {
+    font-size: 12px;
+    font-weight: 700;
+    color: #007AFF;
+}
+
+.custom-tooltip-total {
+    font-size: 9px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* 2 колонки для тем - компактно */
+.custom-tooltip-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 10px;
+}
+
+.custom-tooltip-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+}
+
+.custom-tooltip-color {
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.custom-tooltip-name {
+    flex: 1;
+    color: #ccc;
+    font-weight: 500;
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-tooltip-value {
+    color: #fff;
+    font-weight: 600;
+    font-size: 9px;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+/* Футер */
+.chart-footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(20, 20, 30, 0.2);
+    border-radius: 8px;
+    font-size: 9px;
+}
+
+.footer-hint {
+    color: #555;
+}
+
+.footer-stats {
+    color: #007AFF;
+    font-weight: 500;
+}
+
+/* Загрузка */
+.chart-loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    color: #666;
+    font-size: 13px;
+}
+
+.loading-spinner-chart {
+    width: 28px;
+    height: 28px;
+    border: 2px solid rgba(0, 122, 255, 0.2);
+    border-top-color: #007AFF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
