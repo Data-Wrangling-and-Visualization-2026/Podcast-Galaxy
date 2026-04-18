@@ -23,7 +23,7 @@ const EpisodeDetails: React.FC<EpisodeDetailsProps> = ({ episode }) => {
                 borderRadius: 8,
                 border: '1px dashed rgba(255,255,255,0.1)'
             }}>
-                <div style={{ fontSize: 24, marginBottom: 8 }}>✨</div>
+                <div style={{ fontSize: 24, marginBottom: 8 }}></div>
                 Click on any point<br />to see episode details
             </div>
         );

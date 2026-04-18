@@ -58,7 +58,6 @@ body {
   }
 }
 
-/* Принудительная прокрутка для всех тултипов recharts */
 .recharts-tooltip-wrapper {
   z-index: 9999 !important;
 }

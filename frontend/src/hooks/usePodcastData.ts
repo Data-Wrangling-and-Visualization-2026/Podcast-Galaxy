@@ -3,10 +3,9 @@
  * Handles points loading, filtering, and year selection
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { api } from '../services/api';
 
-// Кэш для предзагруженных тайлов
 const tileCache = new Map();
 
 export const usePodcastData = () => {
@@ -17,7 +16,6 @@ export const usePodcastData = () => {
     const zoomTimeoutRef = useRef(null);
     const preloadTimeoutRef = useRef(null);
 
-    // Функция для расширения границ (предзагрузка соседних тайлов)
     const getExtendedBounds = useCallback((bounds, padding = 0.3) => {
         const width = bounds.x2 - bounds.x1;
         const height = bounds.y2 - bounds.y1;
@@ -30,7 +28,6 @@ export const usePodcastData = () => {
         };
     }, []);
 
-    // Функция для разбиения области на тайлы (для предзагрузки)
     const getTiles = useCallback((bounds, tileSize = 5) => {
         const tiles = [];
         const xSteps = Math.ceil((bounds.x2 - bounds.x1) / tileSize);
@@ -49,7 +46,6 @@ export const usePodcastData = () => {
         return tiles;
     }, []);
 
-    // Загрузка точек с плавным переходом
     const loadPointsSmooth = useCallback(async (bounds, year = null) => {
         if (!bounds) return;
 
@@ -57,25 +53,21 @@ export const usePodcastData = () => {
         currentBoundsRef.current = bounds;
 
         try {
-            // Сначала загружаем основные точки
             const mainPoints = year
                 ? await api.getPointsByYear(year, bounds)
                 : await api.getPointsInViewport(bounds);
 
             setPoints(mainPoints);
 
-            // Предзагружаем соседние тайлы
             const extendedBounds = getExtendedBounds(bounds);
             const tiles = getTiles(extendedBounds);
 
-            // Загружаем тайлы, которых нет в кэше
             for (const tile of tiles) {
                 const tileKey = `${tile.x1}_${tile.y1}_${tile.x2}_${tile.y2}_${year || 'all'}`;
 
                 if (!tileCache.has(tileKey)) {
                     tileCache.set(tileKey, true);
 
-                    // Фоновая загрузка
                     setTimeout(async () => {
                         const preloadPoints = year
                             ? await api.getPointsByYear(year, tile)
@@ -92,12 +84,9 @@ export const usePodcastData = () => {
         }
     }, [getExtendedBounds, getTiles]);
 
-    // Обработчик изменения зума с плавностью
     const handleZoomChange = useCallback((newBounds, zoomLevel) => {
-        // Очищаем предыдущий таймаут
         if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
 
-        // Показываем приблизительные точки (из кэша)
         if (tileCache.size > 0) {
             const cachedPoints = [];
             for (const [_, cachedData] of tileCache) {
@@ -110,7 +99,6 @@ export const usePodcastData = () => {
             }
         }
 
-        // Загружаем точные точки после остановки зума
         zoomTimeoutRef.current = setTimeout(() => {
             loadPointsSmooth(newBounds, selectedYear);
         }, 200);

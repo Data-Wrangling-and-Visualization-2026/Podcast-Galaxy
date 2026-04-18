@@ -24,7 +24,6 @@ export const api = {
 
             if (!response.ok) return [];
             const data = await response.json();
-            // У точек из этого эндпоинта нет года
             return Array.isArray(data) ? data : [];
         } catch (error) {
             console.error('Error fetching points:', error);
@@ -59,14 +58,12 @@ export const api = {
             const data = await response.json();
             console.log(`Response for year ${year}:`, data);
 
-            // Формат ответа: [{ year: 2020, episodes: [...] }]
             if (Array.isArray(data)) {
                 const yearData = data.find(item => item.year === year);
                 if (yearData && yearData.episodes) {
-                    // Явно добавляем год к каждой точке
                     return yearData.episodes.map((ep: any) => ({
                         ...ep,
-                        year: year  // ← ВАЖНО: добавляем год к точке
+                        year: year
                     }));
                 }
             }

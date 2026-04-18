@@ -5,7 +5,6 @@
     background: linear-gradient(135deg, #0a0a0f 0%, #0f0f1a 100%);
 }
 
-/* Hover Tooltip - легкий, минималистичный */
 .map-hover-tooltip {
     position: absolute;
     background: rgba(10, 10, 20, 0.95);
@@ -53,7 +52,6 @@
     letter-spacing: -0.2px;
 }
 
-/* Episode Tooltip - полное описание, центр экрана */
 .episode-tooltip {
     position: absolute;
     background: rgba(15, 15, 25, 0.98);
@@ -222,7 +220,6 @@
     color: #888;
 }
 
-/* Scrollbar for tooltip */
 .episode-tooltip::-webkit-scrollbar {
     width: 5px;
 }
@@ -241,7 +238,6 @@
     background: rgba(0, 122, 255, 0.7);
 }
 
-/* Glow effect animation for selected point */
 @keyframes pointGlow {
     0% {
         filter: drop-shadow(0 0 0px rgba(0, 122, 255, 0));
@@ -254,7 +250,6 @@
     }
 }
 
-/* Particles effect for clicks */
 .click-particle {
     position: absolute;
     border-radius: 50%;
@@ -278,7 +273,6 @@
     }
 }
 
-/* Wave ripple effect on click */
 .click-ripple {
     position: absolute;
     border-radius: 50%;
@@ -299,12 +293,10 @@
     }
 }
 
-/* Smooth zoom animation */
 .deckgl-canvas {
     transition: all 0.2s ease-out;
 }
 
-/* Point entrance animation */
 .point-entrance {
     animation: pointAppear 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
@@ -319,8 +311,6 @@
         transform: scale(1);
     }
 }
-
-/* Добавить в конец файла */
 
 .tooltip-description-wrapper {
     margin-bottom: 20px;
@@ -343,7 +333,6 @@
     text-decoration: underline;
 }
 
-/* Стили для подписи подкаста */
 .tooltip-podcast {
     display: flex;
     align-items: baseline;
@@ -370,7 +359,6 @@
     flex: 1;
 }
 
-/* Описание в одной строке */
 .description-inline {
     display: flex;
     align-items: baseline;

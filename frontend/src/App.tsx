@@ -86,23 +86,19 @@ const App: React.FC = () => {
         if (selectedYear === year) return;
 
         setLoading(true);
-        // ВАЖНО: очищаем точки перед загрузкой нового года
-        setPoints([]);  // ← ДОБАВИТЬ ЭТУ СТРОКУ
-        setSelectedYear(null);  // ← Временно сбрасываем, чтобы не было смешения
+        setPoints([]);
+        setSelectedYear(null);
 
         try {
             const bounds = currentBoundsRef.current;
             const newPoints = await api.getPointsByYear(year, bounds);
 
-            // Проверяем, что все точки имеют правильный год
             const correctYearPoints = newPoints.filter(p => p.year === year);
             console.log(`Loaded ${correctYearPoints.length} points for year ${year}`);
 
-            // Устанавливаем только точки выбранного года
             setPoints(correctYearPoints);
             setSelectedYear(year);
 
-            // Кэширование...
             const extendedBounds = getExtendedBounds(bounds);
             const extendedPoints = await api.getPointsByYear(year, extendedBounds);
             const extendedCorrectPoints = extendedPoints.filter(p => p.year === year);
@@ -189,22 +185,14 @@ const App: React.FC = () => {
     }, [selectedYear, loadPointsByYear, loadAllPoints]);
 
     const getFilteredPoints = useCallback(() => {
-        // В начале getFilteredPoints добавьте:
-        console.log('Filtering points:', {
-            totalPoints: points.length,
-            selectedYear,
-            pointsWithYear: points.filter(p => p.year === selectedYear).length
-        });
         if (selectedYear !== null) {
             const yearPoints = points.filter(p => p.year === selectedYear);
-            // Дополнительная фильтрация по темам
             if (selectedTopics.size > 0) {
                 return yearPoints.filter(p => selectedTopics.has(p.dominant_topic));
             }
             return yearPoints;
         }
 
-        // Если год не выбран - фильтруем только по темам
         if (selectedTopics.size > 0) {
             return points.filter(p => selectedTopics.has(p.dominant_topic));
         }
@@ -227,8 +215,10 @@ const App: React.FC = () => {
     }, [resetYearFilter]);
 
     const handlePointClick = useCallback(async (episodeId: string) => {
+        console.log('App: handlePointClick called with:', episodeId);
         try {
             const details = await api.getEpisodeHover(episodeId);
+            console.log('App: episode details received:', details);
             setSelectedEpisode(details);
         } catch (error) {
             console.error('Error loading episode details:', error);
@@ -352,7 +342,12 @@ const App: React.FC = () => {
                         }}>
                             TOPIC EVOLUTION ({topicStats.length} years)
                         </h3>
-                        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                        <div style={{
+                            flex: 1,
+                            minHeight: 0,
+                            overflowY: 'auto',
+                            paddingRight: '4px'
+                        }}>
                             {topicStats.length > 0 ? (
                                 <TopicLineChart data={topicStats} />
                             ) : (

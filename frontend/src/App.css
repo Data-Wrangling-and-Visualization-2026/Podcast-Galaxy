@@ -7,16 +7,16 @@
   background: #0a0a0f;
 }
 
-/* ШАПКА - уменьшенная высота */
+
 .app-header {
-  height: 56px;              /* было 72px */
+  height: 56px;
   background: rgba(8, 8, 16, 0.85);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(0, 122, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;           /* было 0 32px */
+  padding: 0 24px;
   flex-shrink: 0;
   position: relative;
   z-index: 10;
@@ -25,16 +25,16 @@
 .header-logo {
   display: flex;
   align-items: center;
-  gap: 12px;                 /* было 16px */
+  gap: 12px;
 }
 
 .logo-icon svg {
-  width: 28px;               /* было 36px */
+  width: 28px;
   height: 28px;
 }
 
 .header-title h1 {
-  font-size: 18px;           /* было 22px */
+  font-size: 18px;
   font-weight: 700;
   background: linear-gradient(135deg, #fff 0%, #888 100%);
   -webkit-background-clip: text;
@@ -44,7 +44,7 @@
 }
 
 .header-title span {
-  font-size: 8px;            /* было 10px */
+  font-size: 8px;
   color: #555;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -55,16 +55,16 @@
 .header-badge {
   display: flex;
   align-items: center;
-  gap: 6px;                  /* было 8px */
+  gap: 6px;
   background: rgba(0, 122, 255, 0.15);
-  padding: 4px 12px;         /* было 6px 16px */
+  padding: 4px 12px;
   border-radius: 32px;
   border: 1px solid rgba(0, 122, 255, 0.3);
   backdrop-filter: blur(10px);
 }
 
 .badge-label {
-  font-size: 9px;            /* было 10px */
+  font-size: 9px;
   font-weight: 500;
   color: #888;
   text-transform: uppercase;
@@ -72,12 +72,11 @@
 }
 
 .badge-value {
-  font-size: 14px;           /* было 16px */
+  font-size: 14px;
   font-weight: 700;
   color: #007AFF;
 }
 
-/* Main layout */
 .app-main {
   display: flex;
   flex: 1;
@@ -85,7 +84,6 @@
   min-height: 0;
 }
 
-/* Loading overlay */
 .loading-overlay {
   position: absolute;
   top: 50%;
@@ -110,4 +108,23 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Scrollbar for right panel */
+.app-main > div:last-child ::-webkit-scrollbar {
+  width: 5px;
+}
+
+.app-main > div:last-child ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.app-main > div:last-child ::-webkit-scrollbar-thumb {
+  background: rgba(0, 122, 255, 0.4);
+  border-radius: 4px;
+}
+
+.app-main > div:last-child ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 122, 255, 0.6);
 }

@@ -98,7 +98,6 @@
     transition: left 0.1s ease, width 0.1s ease;
 }
 
-/* Звездочки */
 .timeline-handle {
     position: absolute;
     top: 6px;
@@ -178,7 +177,6 @@
     bottom: 32px;
 }
 
-/* Ползунки - интерактивная область */
 .timeline-input {
     position: absolute;
     bottom: 0;
@@ -382,7 +380,6 @@
     cursor: not-allowed;
 }
 
-/* Добавить в конец файла */
 .timeline-container.loading {
     opacity: 0.6;
     pointer-events: none;

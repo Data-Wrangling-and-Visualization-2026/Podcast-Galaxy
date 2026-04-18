@@ -6,7 +6,6 @@
     gap: 12px;
 }
 
-/* Кнопки управления */
 .chart-controls {
     display: flex;
     gap: 10px;
@@ -48,7 +47,6 @@
     background: rgba(255, 59, 48, 0.25);
 }
 
-/* Легенда - 4 колонки */
 .chart-legend-wrapper {
     flex-shrink: 0;
     background: rgba(20, 20, 30, 0.3);
@@ -106,7 +104,6 @@
     text-decoration: line-through;
 }
 
-/* Основная область графика */
 .chart-main {
     flex: 1;
     min-height: 360px;
@@ -114,7 +111,7 @@
     border-radius: 12px;
     padding: 6px;
 }
-/* Тултип - 2 колонки, компактный */
+
 .custom-tooltip {
     background: rgba(10, 10, 20, 0.98);
     backdrop-filter: blur(16px);
@@ -148,7 +145,6 @@
     font-weight: 500;
 }
 
-/* 2 колонки для тем - компактно */
 .custom-tooltip-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -187,7 +183,6 @@
     margin-left: 4px;
 }
 
-/* Футер */
 .chart-footer {
     flex-shrink: 0;
     display: flex;
@@ -208,7 +203,6 @@
     font-weight: 500;
 }
 
-/* Загрузка */
 .chart-loading-state {
     display: flex;
     align-items: center;
